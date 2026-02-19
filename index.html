@@ -514,10 +514,6 @@
       <option value="name-desc">Name (Z → A)</option>
     </select>
     <label class="toggle-label">
-      <input type="checkbox" id="show-bonus" checked />
-      Include bonus levels in total
-    </label>
-    <label class="toggle-label">
       <input type="checkbox" id="hide-zero" />
       Hide level 0
     </label>
@@ -536,7 +532,6 @@
   const errorMsg = document.getElementById('error-msg');
   const searchInput = document.getElementById('search-input');
   const sortSelect = document.getElementById('sort-select');
-  const showBonusChk = document.getElementById('show-bonus');
   const hideZeroChk = document.getElementById('hide-zero');
   const resetBtn = document.getElementById('reset-btn');
 
@@ -589,7 +584,6 @@
   function render() {
     if (!charData) return;
 
-    const useBonus = showBonusChk.checked;
     const hideZero = hideZeroChk.checked;
     const search = searchInput.value.toLowerCase();
     const sort = sortSelect.value;
@@ -608,6 +602,7 @@
     });
 
     // Build skill list
+    // Note: Level already includes bonus levels. BonusLevels is informational only.
     let skills = Object.entries(charData.Skills)
       .filter(([key]) => key !== 'Unknown')
       .map(([key, val]) => ({
@@ -615,7 +610,7 @@
         name: formatSkillName(key),
         level: val.Level || 0,
         bonus: val.BonusLevels || 0,
-        effectiveLevel: (val.Level || 0) + (useBonus ? (val.BonusLevels || 0) : 0),
+        effectiveLevel: val.Level || 0,  // Level already includes bonuses
         xpToward: val.XpTowardNextLevel || 0,
         xpNeeded: val.XpNeededForNextLevel || 0,
         hasSubskills: parentSkills.has(key),
@@ -624,8 +619,7 @@
     // Totals (exclude parent skills that have subskills to avoid double-counting)
     const allSkills = skills;
     const skillsForTotal = allSkills.filter(sk => !sk.hasSubskills);
-    const totalBase = skillsForTotal.reduce((s, sk) => s + sk.level, 0);
-    const totalEffective = skillsForTotal.reduce((s, sk) => s + sk.effectiveLevel, 0);
+    const totalLevel = skillsForTotal.reduce((s, sk) => s + sk.level, 0);
     // Note: skillCount and maxSkill use allSkills to include all skills in these statistics
     const skillCount = allSkills.filter(sk => sk.level > 0).length;
     const maxSkill = allSkills.reduce((m, sk) => sk.level > m ? sk.level : m, 0);
@@ -635,11 +629,8 @@
     document.getElementById('char-meta-text').textContent =
       [charData.Race, charData.Timestamp].filter(Boolean).join(' · ');
 
-    document.getElementById('total-level-num').textContent = totalEffective.toLocaleString();
-    document.getElementById('total-level-sub').textContent =
-      useBonus && totalEffective !== totalBase
-        ? `Base: ${totalBase.toLocaleString()}`
-        : `${skillCount} skills trained`;
+    document.getElementById('total-level-num').textContent = totalLevel.toLocaleString();
+    document.getElementById('total-level-sub').textContent = `${skillCount} skills trained`;
 
     // Stats chips
     const statsRow = document.getElementById('stats-row');
@@ -647,7 +638,6 @@
     const chips = [
       { label: 'Skills Trained', value: skillCount },
       { label: 'Highest Skill', value: maxSkill },
-      { label: 'Base Total', value: totalBase.toLocaleString() },
     ];
     if (charData.CurrentStats) {
       const s = charData.CurrentStats;
@@ -899,7 +889,6 @@
   // Re-render on control changes
   searchInput.addEventListener('input', render);
   sortSelect.addEventListener('change', render);
-  showBonusChk.addEventListener('change', render);
   hideZeroChk.addEventListener('change', render);
 
   // Reset
