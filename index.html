@@ -586,35 +586,6 @@
     render();
   }
 
-  // Recalculate bonus levels for parent skills based on subskills
-  function recalculateBonusLevels(skillsData) {
-    const correctedData = { ...skillsData };
-    const parentSkills = ['Anatomy', 'Phrenology', 'Performance'];
-    
-    parentSkills.forEach(parentSkill => {
-      if (!correctedData[parentSkill]) return;
-      
-      // Find all subskills with pattern ParentSkill_*
-      const subskillPrefix = parentSkill + '_';
-      let bonusSum = 0;
-      
-      Object.entries(correctedData).forEach(([key, val]) => {
-        if (key.startsWith(subskillPrefix)) {
-          // Only sum the base level, not the bonus levels of subskills
-          bonusSum += (val.Level || 0);
-        }
-      });
-      
-      // Update the parent skill's bonus levels
-      correctedData[parentSkill] = {
-        ...correctedData[parentSkill],
-        BonusLevels: bonusSum
-      };
-    });
-    
-    return correctedData;
-  }
-
   function render() {
     if (!charData) return;
 
@@ -623,11 +594,8 @@
     const search = searchInput.value.toLowerCase();
     const sort = sortSelect.value;
 
-    // Recalculate bonus levels for parent skills
-    const correctedSkills = recalculateBonusLevels(charData.Skills);
-
     // Build skill list
-    let skills = Object.entries(correctedSkills)
+    let skills = Object.entries(charData.Skills)
       .filter(([key]) => key !== 'Unknown')
       .map(([key, val]) => ({
         key,
