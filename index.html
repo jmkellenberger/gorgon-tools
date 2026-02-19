@@ -685,10 +685,8 @@
     if (charData.ReportVersion) charInfo.push({ label: 'Version', value: charData.ReportVersion });
     if (Array.isArray(charData.ActiveQuests)) charInfo.push({ label: 'Active Quests', value: charData.ActiveQuests.length });
     if (Array.isArray(charData.ActiveWorkOrders)) charInfo.push({ label: 'Work Orders', value: charData.ActiveWorkOrders.length });
-    if (charData.Currencies) {
-      if (charData.Currencies.COMBAT_WISDOM) charInfo.push({ label: 'Combat Wisdom', value: charData.Currencies.COMBAT_WISDOM });
-      if (charData.Currencies.GUILDCREDITS) charInfo.push({ label: 'Guild Credits', value: charData.Currencies.GUILDCREDITS });
-    }
+    if (charData.Currencies?.COMBAT_WISDOM) charInfo.push({ label: 'Combat Wisdom', value: charData.Currencies.COMBAT_WISDOM });
+    if (charData.Currencies?.GUILDCREDITS) charInfo.push({ label: 'Guild Credits', value: charData.Currencies.GUILDCREDITS });
     
     charInfo.forEach(info => {
       const el = document.createElement('div');
@@ -820,24 +818,41 @@
     // Sort by rank (highest first), then alphabetically by name
     npcList.sort((a, b) => b.rank - a.rank || a.name.localeCompare(b.name));
 
-    // Render NPC cards
-    let html = '<div class="favor-grid">';
+    // Render NPC cards using DOM methods to prevent XSS
+    const grid = document.createElement('div');
+    grid.className = 'favor-grid';
     
     npcList.forEach(npc => {
       const tier = FAVOR_TIERS[npc.rank];
-      html += `
-        <div class="favor-card">
-          <div class="favor-dot" style="background:${tier.color}"></div>
-          <div class="favor-info">
-            <div class="favor-npc-name" title="${npc.name}">${npc.name}</div>
-            <div class="favor-level-text">${tier.label}</div>
-          </div>
-        </div>
-      `;
+      
+      const card = document.createElement('div');
+      card.className = 'favor-card';
+      
+      const dot = document.createElement('div');
+      dot.className = 'favor-dot';
+      dot.style.background = tier.color;
+      
+      const info = document.createElement('div');
+      info.className = 'favor-info';
+      
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'favor-npc-name';
+      nameDiv.title = npc.name;
+      nameDiv.textContent = npc.name;
+      
+      const levelDiv = document.createElement('div');
+      levelDiv.className = 'favor-level-text';
+      levelDiv.textContent = tier.label;
+      
+      info.appendChild(nameDiv);
+      info.appendChild(levelDiv);
+      card.appendChild(dot);
+      card.appendChild(info);
+      grid.appendChild(card);
     });
     
-    html += '</div>';
-    content.innerHTML = html;
+    content.innerHTML = '';
+    content.appendChild(grid);
   }
 
   // ── Crafting ────────────────────────────────────────────────────────────────
