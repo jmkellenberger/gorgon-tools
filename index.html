@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project Gorgon — Level Calculator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0e1117;
+      --surface: #161b22;
+      --surface2: #1c2430;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #7d8590;
+      --accent: #58a6ff;
+      --gold: #d4a017;
+      --gold-dim: #8a6a10;
+      --green: #3fb950;
+      --red: #f85149;
+      --radius: 8px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 0.02em;
+    }
+
+    header p {
+      color: var(--muted);
+      margin-top: 0.35rem;
+      font-size: 0.9rem;
+    }
+
+    /* Drop zone */
+    #drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 3rem 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      max-width: 560px;
+      margin: 0 auto 2rem;
+      background: var(--surface);
+    }
+
+    #drop-zone:hover, #drop-zone.drag-over {
+      border-color: var(--accent);
+      background: var(--surface2);
+    }
+
+    #drop-zone svg {
+      display: block;
+      margin: 0 auto 1rem;
+      color: var(--muted);
+    }
+
+    #drop-zone.drag-over svg { color: var(--accent); }
+
+    #drop-zone p {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    #drop-zone p strong { color: var(--text); }
+
+    #file-input { display: none; }
+
+    .btn {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.5rem 1.25rem;
+      background: var(--accent);
+      color: #0e1117;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.85; }
+
+    /* Output */
+    #output { display: none; max-width: 960px; margin: 0 auto; }
+
+    /* Character header */
+    .char-header {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .char-name {
+      flex: 1;
+      min-width: 160px;
+    }
+
+    .char-name h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .char-name p {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-top: 0.2rem;
+    }
+
+    /* Total level badge */
+    .total-level {
+      background: linear-gradient(135deg, #2a1f00, #1a1200);
+      border: 2px solid var(--gold-dim);
+      border-radius: var(--radius);
+      padding: 1rem 1.75rem;
+      text-align: center;
+      min-width: 160px;
+    }
+
+    .total-level .label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--gold-dim);
+    }
+
+    .total-level .number {
+      font-size: 2.75rem;
+      font-weight: 800;
+      color: var(--gold);
+      line-height: 1;
+      margin: 0.15rem 0;
+    }
+
+    .total-level .sub {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    /* Stats row */
+    .stats-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.6rem 1rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .stat-chip strong { color: var(--text); }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .controls input[type="text"] {
+      flex: 1;
+      min-width: 180px;
+      padding: 0.45rem 0.75rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 0.875rem;
+    }
+
+    .controls input[type="text"]::placeholder { color: var(--muted); }
+    .controls input[type="text"]:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .controls select {
+      padding: 0.45rem 0.75rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .toggle-label input { cursor: pointer; accent-color: var(--accent); }
+
+    /* Skill grid */
+    #skill-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.5rem;
+    }
+
+    .skill-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.6rem 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      transition: border-color 0.15s;
+    }
+
+    .skill-card:hover { border-color: var(--accent); }
+
+    .skill-level {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--gold);
+      min-width: 2.5rem;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .skill-info { flex: 1; min-width: 0; }
+
+    .skill-name {
+      font-size: 0.8rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text);
+    }
+
+    .skill-bonus {
+      font-size: 0.7rem;
+      color: var(--green);
+    }
+
+    .skill-xp-bar {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      margin-top: 4px;
+      overflow: hidden;
+    }
+
+    .skill-xp-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    /* Reset button */
+    #reset-btn {
+      display: block;
+      text-align: center;
+      margin-top: 1.5rem;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--muted);
+      padding: 0.45rem 1rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    #reset-btn:hover { border-color: var(--red); color: var(--red); }
+
+    .error-msg {
+      background: #2d1117;
+      border: 1px solid var(--red);
+      border-radius: var(--radius);
+      color: var(--red);
+      padding: 0.75rem 1rem;
+      font-size: 0.875rem;
+      max-width: 560px;
+      margin: 0 auto 1rem;
+      display: none;
+    }
+
+    /* Section titles */
+    .section-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 0.85rem;
+    }
+
+    /* NPC Favor */
+    #favor-section { margin-bottom: 1.75rem; }
+
+    .favor-chart {
+      display: flex;
+      gap: 0.4rem;
+      height: 110px;
+      margin-bottom: 0.75rem;
+    }
+
+    .favor-tier {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+    }
+
+    .favor-count {
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 0.2rem;
+      line-height: 1;
+    }
+
+    .favor-bar-wrap {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .favor-bar-fill {
+      width: 100%;
+      border-radius: 3px 3px 0 0;
+      transition: height 0.4s ease;
+    }
+
+    .favor-label {
+      font-size: 0.58rem;
+      color: var(--muted);
+      text-align: center;
+      margin-top: 0.3rem;
+      line-height: 1.25;
+      word-break: break-word;
+    }
+
+    .npc-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+
+    .npc-chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 0.2rem 0.65rem;
+      font-size: 0.72rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: var(--text);
+    }
+
+    .npc-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* Crafting */
+    #crafting-section { margin-bottom: 1.75rem; }
+
+    .craft-summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .craft-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(172px, 1fr));
+      gap: 0.5rem;
+    }
+
+    .craft-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.6rem 0.75rem;
+    }
+
+    .craft-card-name {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.3rem;
+    }
+
+    .craft-card-stats {
+      font-size: 0.72rem;
+      color: var(--muted);
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .craft-bar {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      margin-top: 0.45rem;
+      overflow: hidden;
+    }
+
+    .craft-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    /* Scrollback to top of skill grid on mobile */
+    @media (max-width: 480px) {
+      #skill-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Project Gorgon Level Calculator</h1>
+  <p>Paste or load your character sheet JSON to see your total level</p>
+</header>
+
+<div id="drop-zone" role="button" tabindex="0" aria-label="Drop JSON file here or click to choose">
+  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+    <path stroke-linecap="round" stroke-linejoin="round"
+      d="M9 13.5l3 3m0 0l3-3m-3 3v-6m1.06-4.19l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+  </svg>
+  <p><strong>Drag &amp; drop</strong> your character JSON here</p>
+  <p style="margin-top:0.25rem">or</p>
+  <button class="btn" id="pick-btn" type="button">Choose File</button>
+  <input type="file" id="file-input" accept=".json,application/json" />
+</div>
+
+<div class="error-msg" id="error-msg"></div>
+
+<div id="output">
+  <div class="char-header">
+    <div class="char-name">
+      <h2 id="char-name-text"></h2>
+      <p id="char-meta-text"></p>
+    </div>
+    <div class="total-level">
+      <div class="label">Total Level</div>
+      <div class="number" id="total-level-num">0</div>
+      <div class="sub" id="total-level-sub"></div>
+    </div>
+  </div>
+
+  <div class="stats-row" id="stats-row"></div>
+
+  <div id="favor-section" style="display:none">
+    <div class="section-title">NPC Relations</div>
+    <div class="favor-chart" id="favor-chart"></div>
+    <div class="npc-chips" id="top-npcs"></div>
+  </div>
+
+  <div id="crafting-section" style="display:none">
+    <div class="section-title">Crafting</div>
+    <div class="craft-summary" id="craft-summary"></div>
+    <div class="craft-grid" id="craft-grid"></div>
+  </div>
+
+  <div class="section-title">Skills</div>
+  <div class="controls">
+    <input type="text" id="search-input" placeholder="Search skills…" />
+    <select id="sort-select">
+      <option value="level-desc">Level (high → low)</option>
+      <option value="level-asc">Level (low → high)</option>
+      <option value="name-asc">Name (A → Z)</option>
+      <option value="name-desc">Name (Z → A)</option>
+    </select>
+    <label class="toggle-label">
+      <input type="checkbox" id="show-bonus" checked />
+      Include bonus levels in total
+    </label>
+    <label class="toggle-label">
+      <input type="checkbox" id="hide-zero" />
+      Hide level 0
+    </label>
+  </div>
+
+  <div id="skill-grid"></div>
+
+  <button id="reset-btn" type="button">Load a different character</button>
+</div>
+
+<script>
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+  const pickBtn = document.getElementById('pick-btn');
+  const output = document.getElementById('output');
+  const errorMsg = document.getElementById('error-msg');
+  const searchInput = document.getElementById('search-input');
+  const sortSelect = document.getElementById('sort-select');
+  const showBonusChk = document.getElementById('show-bonus');
+  const hideZeroChk = document.getElementById('hide-zero');
+  const resetBtn = document.getElementById('reset-btn');
+
+  let charData = null;
+
+  // Format skill key into readable name
+  function formatSkillName(key) {
+    // Handle Anatomy_X → Anatomy (X)
+    if (/^Anatomy_/.test(key)) {
+      return 'Anatomy (' + key.replace('Anatomy_', '') + ')';
+    }
+    if (/^Phrenology_/.test(key)) {
+      return 'Phrenology (' + key.replace('Phrenology_', '') + ')';
+    }
+    if (/^Performance_/.test(key)) {
+      return 'Performance (' + key.replace('Performance_', '') + ')';
+    }
+    // CamelCase → words
+    return key.replace(/([A-Z])/g, ' $1').trim();
+  }
+
+  function showError(msg) {
+    errorMsg.textContent = msg;
+    errorMsg.style.display = 'block';
+  }
+
+  function hideError() {
+    errorMsg.style.display = 'none';
+  }
+
+  function parseAndRender(json) {
+    hideError();
+    let data;
+    try {
+      data = JSON.parse(json);
+    } catch (e) {
+      showError('Could not parse JSON: ' + e.message);
+      return;
+    }
+
+    if (!data.Skills) {
+      showError('This doesn\'t look like a Project Gorgon character sheet (missing "Skills" field).');
+      return;
+    }
+
+    charData = data;
+    render();
+  }
+
+  function render() {
+    if (!charData) return;
+
+    const useBonus = showBonusChk.checked;
+    const hideZero = hideZeroChk.checked;
+    const search = searchInput.value.toLowerCase();
+    const sort = sortSelect.value;
+
+    // Build skill list
+    let skills = Object.entries(charData.Skills)
+      .filter(([key]) => key !== 'Unknown')
+      .map(([key, val]) => ({
+        key,
+        name: formatSkillName(key),
+        level: val.Level || 0,
+        bonus: val.BonusLevels || 0,
+        effectiveLevel: (val.Level || 0) + (useBonus ? (val.BonusLevels || 0) : 0),
+        xpToward: val.XpTowardNextLevel || 0,
+        xpNeeded: val.XpNeededForNextLevel || 0,
+      }));
+
+    // Totals (always over all skills, not filtered)
+    const allSkills = skills;
+    const totalBase = allSkills.reduce((s, sk) => s + sk.level, 0);
+    const totalEffective = allSkills.reduce((s, sk) => s + sk.effectiveLevel, 0);
+    const skillCount = allSkills.filter(sk => sk.level > 0).length;
+    const maxSkill = allSkills.reduce((m, sk) => sk.level > m ? sk.level : m, 0);
+
+    // Update header
+    document.getElementById('char-name-text').textContent = charData.Character || 'Unknown';
+    document.getElementById('char-meta-text').textContent =
+      [charData.Race, charData.Timestamp].filter(Boolean).join(' · ');
+
+    document.getElementById('total-level-num').textContent = totalEffective.toLocaleString();
+    document.getElementById('total-level-sub').textContent =
+      useBonus && totalEffective !== totalBase
+        ? `Base: ${totalBase.toLocaleString()}`
+        : `${skillCount} skills trained`;
+
+    // Stats chips
+    const statsRow = document.getElementById('stats-row');
+    statsRow.innerHTML = '';
+    const chips = [
+      { label: 'Skills Trained', value: skillCount },
+      { label: 'Highest Skill', value: maxSkill },
+      { label: 'Base Total', value: totalBase.toLocaleString() },
+    ];
+    if (charData.CurrentStats) {
+      const s = charData.CurrentStats;
+      if (s.MAX_HEALTH) chips.push({ label: 'Max Health', value: s.MAX_HEALTH });
+      if (s.MAX_ARMOR) chips.push({ label: 'Max Armor', value: s.MAX_ARMOR });
+      if (s.MAX_POWER) chips.push({ label: 'Max Power', value: s.MAX_POWER });
+    }
+    if (charData.Currencies && charData.Currencies.GOLD !== undefined) {
+      chips.push({ label: 'Gold', value: charData.Currencies.GOLD.toLocaleString() });
+    }
+    chips.forEach(c => {
+      const el = document.createElement('div');
+      el.className = 'stat-chip';
+      el.innerHTML = `${c.label}: <strong>${c.value}</strong>`;
+      statsRow.appendChild(el);
+    });
+
+    renderFavor(charData);
+    renderCrafting(charData);
+
+    // Filter & sort for display
+    let displayed = skills.slice();
+
+    if (hideZero) displayed = displayed.filter(sk => sk.level > 0);
+    if (search) displayed = displayed.filter(sk => sk.name.toLowerCase().includes(search));
+
+    displayed.sort((a, b) => {
+      if (sort === 'level-desc') return b.effectiveLevel - a.effectiveLevel || a.name.localeCompare(b.name);
+      if (sort === 'level-asc') return a.effectiveLevel - b.effectiveLevel || a.name.localeCompare(b.name);
+      if (sort === 'name-asc') return a.name.localeCompare(b.name);
+      if (sort === 'name-desc') return b.name.localeCompare(a.name);
+      return 0;
+    });
+
+    // Render grid
+    const grid = document.getElementById('skill-grid');
+    grid.innerHTML = '';
+    displayed.forEach(sk => {
+      const xpPct = sk.xpNeeded > 0 ? Math.min(100, (sk.xpToward / sk.xpNeeded) * 100) : (sk.xpNeeded === -1 ? 100 : 0);
+      const card = document.createElement('div');
+      card.className = 'skill-card';
+      card.innerHTML = `
+        <div class="skill-level">${sk.effectiveLevel}</div>
+        <div class="skill-info">
+          <div class="skill-name" title="${sk.name}">${sk.name}</div>
+          <div class="skill-xp-bar"><div class="skill-xp-fill" style="width:${xpPct}%"></div></div>
+          ${sk.bonus > 0 ? `<div class="skill-bonus">+${sk.bonus} bonus</div>` : ''}
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+
+    if (displayed.length === 0) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'grid-column:1/-1;color:var(--muted);font-size:0.875rem;padding:1rem 0;';
+      empty.textContent = 'No skills match your filter.';
+      grid.appendChild(empty);
+    }
+
+    dropZone.style.display = 'none';
+    output.style.display = 'block';
+  }
+
+  // ── NPC Favor ──────────────────────────────────────────────────────────────
+
+  const FAVOR_TIERS = [
+    { key: 'Neutral',      label: 'Neutral',      color: '#4e5964' },
+    { key: 'Tolerated',    label: 'Tolerated',    color: '#6b7888' },
+    { key: 'Comfortable',  label: 'Comfortable',  color: '#79b8ff' },
+    { key: 'Friends',      label: 'Friends',      color: '#56d364' },
+    { key: 'CloseFriends', label: 'Close Friends',color: '#2ea043' },
+    { key: 'BestFriends',  label: 'Best Friends', color: '#e3b341' },
+    { key: 'LikeFamily',   label: 'Like Family',  color: '#f0883e' },
+    { key: 'SoulMates',    label: 'Soul Mates',   color: '#d4a017' },
+  ];
+
+  const FAVOR_RANK = Object.fromEntries(FAVOR_TIERS.map((t, i) => [t.key, i]));
+
+  function renderFavor(data) {
+    const section = document.getElementById('favor-section');
+    if (!data.NPCs || Object.keys(data.NPCs).length === 0) {
+      section.style.display = 'none';
+      return;
+    }
+
+    const counts = Object.fromEntries(FAVOR_TIERS.map(t => [t.key, 0]));
+    const npcList = [];
+
+    Object.entries(data.NPCs).forEach(([name, npcData]) => {
+      const favor = npcData.FavorLevel || 'Neutral';
+      if (counts[favor] !== undefined) counts[favor]++;
+      else counts['Neutral']++;
+      npcList.push({ name, favor, rank: FAVOR_RANK[favor] ?? 0 });
+    });
+
+    const maxCount = Math.max(1, ...Object.values(counts));
+    const BAR_MAX_PX = 72; // matches the flex-1 area minus count label
+
+    // Bar chart
+    const chart = document.getElementById('favor-chart');
+    chart.innerHTML = '';
+    FAVOR_TIERS.forEach(tier => {
+      const count = counts[tier.key] || 0;
+      const fillH = count === 0 ? 3 : Math.max(8, Math.round((count / maxCount) * BAR_MAX_PX));
+      const opacity = count === 0 ? 0.2 : 0.85;
+      const col = document.createElement('div');
+      col.className = 'favor-tier';
+      col.innerHTML = `
+        <div class="favor-count" style="color:${count > 0 ? tier.color : 'var(--muted)'}">${count > 0 ? count : ''}</div>
+        <div class="favor-bar-wrap">
+          <div class="favor-bar-fill" style="height:${fillH}px;background:${tier.color};opacity:${opacity}"></div>
+        </div>
+        <div class="favor-label">${tier.label}</div>
+      `;
+      chart.appendChild(col);
+    });
+
+    // Top NPC chips (Friends+, sorted by tier desc then name)
+    const topNpcs = npcList
+      .filter(n => n.rank >= 3)
+      .sort((a, b) => b.rank - a.rank || a.name.localeCompare(b.name))
+      .slice(0, 12);
+
+    const chipsEl = document.getElementById('top-npcs');
+    chipsEl.innerHTML = '';
+    topNpcs.forEach(n => {
+      const tier = FAVOR_TIERS[n.rank];
+      const chip = document.createElement('div');
+      chip.className = 'npc-chip';
+      chip.title = tier.label;
+      chip.innerHTML = `<div class="npc-dot" style="background:${tier.color}"></div>${n.name}`;
+      chipsEl.appendChild(chip);
+    });
+
+    section.style.display = 'block';
+  }
+
+  // ── Crafting ────────────────────────────────────────────────────────────────
+
+  function renderCrafting(data) {
+    const section = document.getElementById('crafting-section');
+    if (!data.RecipeCompletions || Object.keys(data.RecipeCompletions).length === 0) {
+      section.style.display = 'none';
+      return;
+    }
+
+    let totalCrafts = 0;
+    let uniqueTried = 0;
+    let totalRecipes = 0;
+    const bySkill = {}; // skill → { total, tried, unique }
+
+    Object.entries(data.RecipeCompletions).forEach(([key, count]) => {
+      const cnt = typeof count === 'number' ? count : 0;
+      const underscore = key.indexOf('_');
+      const skill = underscore > 0 ? key.slice(0, underscore) : 'Misc';
+
+      totalCrafts += cnt;
+      totalRecipes++;
+      if (cnt > 0) uniqueTried++;
+
+      if (!bySkill[skill]) bySkill[skill] = { total: 0, tried: 0, unique: 0 };
+      bySkill[skill].total += cnt;
+      bySkill[skill].unique++;
+      if (cnt > 0) bySkill[skill].tried++;
+    });
+
+    // Summary chips
+    const summary = document.getElementById('craft-summary');
+    summary.innerHTML = '';
+    const skillsWithCrafts = Object.values(bySkill).filter(c => c.total > 0).length;
+    [
+      { label: 'Total Crafts', value: totalCrafts.toLocaleString() },
+      { label: 'Recipes Tried', value: `${uniqueTried.toLocaleString()} / ${totalRecipes.toLocaleString()}` },
+      { label: 'Crafting Skills', value: skillsWithCrafts },
+    ].forEach(c => {
+      const el = document.createElement('div');
+      el.className = 'stat-chip';
+      el.innerHTML = `${c.label}: <strong>${c.value}</strong>`;
+      summary.appendChild(el);
+    });
+
+    // Category grid (only skills with at least 1 craft, sorted by total desc)
+    const maxTotal = Math.max(1, ...Object.values(bySkill).map(c => c.total));
+    const grid = document.getElementById('craft-grid');
+    grid.innerHTML = '';
+
+    Object.entries(bySkill)
+      .filter(([, c]) => c.total > 0)
+      .sort(([, a], [, b]) => b.total - a.total)
+      .forEach(([skill, c]) => {
+        const pct = (c.total / maxTotal) * 100;
+        const card = document.createElement('div');
+        card.className = 'craft-card';
+        card.innerHTML = `
+          <div class="craft-card-name">${skill}</div>
+          <div class="craft-card-stats">
+            <span><strong style="color:var(--text)">${c.total.toLocaleString()}</strong> crafts</span>
+            <span><strong style="color:var(--text)">${c.tried}/${c.unique}</strong> recipes</span>
+          </div>
+          <div class="craft-bar"><div class="craft-bar-fill" style="width:${pct.toFixed(1)}%"></div></div>
+        `;
+        grid.appendChild(card);
+      });
+
+    section.style.display = 'block';
+  }
+
+  // Drag and drop
+  dropZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropZone.classList.add('drag-over');
+  });
+
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    readFile(file);
+  });
+
+  // Click to open file picker
+  pickBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    fileInput.click();
+  });
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) readFile(fileInput.files[0]);
+    fileInput.value = '';
+  });
+
+  function readFile(file) {
+    if (!file.name.endsWith('.json') && file.type !== 'application/json' && file.type !== 'text/plain') {
+      showError('Please choose a JSON file.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => parseAndRender(e.target.result);
+    reader.onerror = () => showError('Could not read file.');
+    reader.readAsText(file);
+  }
+
+  // Re-render on control changes
+  searchInput.addEventListener('input', render);
+  sortSelect.addEventListener('change', render);
+  showBonusChk.addEventListener('change', render);
+  hideZeroChk.addEventListener('change', render);
+
+  // Reset
+  resetBtn.addEventListener('click', () => {
+    charData = null;
+    output.style.display = 'none';
+    dropZone.style.display = '';
+    hideError();
+  });
+
+  // Paste JSON directly anywhere on the page
+  document.addEventListener('paste', e => {
+    const text = e.clipboardData.getData('text/plain');
+    if (text.trim().startsWith('{')) parseAndRender(text);
+  });
+</script>
+</body>
+</html>
