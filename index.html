@@ -330,74 +330,46 @@
     /* NPC Favor */
     #favor-section { margin-bottom: 1.75rem; }
 
-    .favor-chart {
-      display: flex;
-      gap: 0.4rem;
-      height: 110px;
-      margin-bottom: 0.75rem;
+    .favor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.5rem;
     }
 
-    .favor-tier {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      height: 100%;
-    }
-
-    .favor-count {
-      font-size: 0.8rem;
-      font-weight: 700;
-      margin-bottom: 0.2rem;
-      line-height: 1;
-    }
-
-    .favor-bar-wrap {
-      flex: 1;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-    }
-
-    .favor-bar-fill {
-      width: 100%;
-      border-radius: 3px 3px 0 0;
-      transition: height 0.4s ease;
-    }
-
-    .favor-label {
-      font-size: 0.58rem;
-      color: var(--muted);
-      text-align: center;
-      margin-top: 0.3rem;
-      line-height: 1.25;
-      word-break: break-word;
-    }
-
-    .npc-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.35rem;
-    }
-
-    .npc-chip {
+    .favor-card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 0.2rem 0.65rem;
-      font-size: 0.72rem;
+      border-radius: var(--radius);
+      padding: 0.6rem 0.75rem;
       display: flex;
       align-items: center;
-      gap: 0.35rem;
+      gap: 0.6rem;
+      transition: border-color 0.15s;
+    }
+
+    .favor-card:hover { border-color: var(--accent); }
+
+    .favor-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .favor-info { flex: 1; min-width: 0; }
+
+    .favor-npc-name {
+      font-size: 0.8rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       color: var(--text);
     }
 
-    .npc-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      flex-shrink: 0;
+    .favor-level-text {
+      font-size: 0.7rem;
+      color: var(--muted);
     }
 
     /* Crafting */
@@ -494,8 +466,7 @@
 
   <div id="favor-section" style="display:none">
     <div class="section-title">NPC Relations</div>
-    <div class="favor-chart" id="favor-chart"></div>
-    <div class="npc-chips" id="top-npcs"></div>
+    <div class="favor-grid" id="favor-grid"></div>
   </div>
 
   <div id="crafting-section" style="display:none">
@@ -727,53 +698,46 @@
       return;
     }
 
-    const counts = Object.fromEntries(FAVOR_TIERS.map(t => [t.key, 0]));
     const npcList = [];
 
+    // Build list of NPCs, filtering out Neutral ones
     Object.entries(data.NPCs).forEach(([name, npcData]) => {
       const favor = npcData.FavorLevel || 'Neutral';
-      if (counts[favor] !== undefined) counts[favor]++;
-      else counts['Neutral']++;
-      npcList.push({ name: trimNpcPrefix(name), favor, rank: FAVOR_RANK[favor] ?? 0 });
+      // Skip Neutral NPCs
+      if (favor === 'Neutral') return;
+      
+      npcList.push({ 
+        name: trimNpcPrefix(name), 
+        favor, 
+        rank: FAVOR_RANK[favor] ?? 0 
+      });
     });
 
-    const maxCount = Math.max(1, ...Object.values(counts));
-    const BAR_MAX_PX = 72; // matches the flex-1 area minus count label
+    // If no non-neutral NPCs, hide the section
+    if (npcList.length === 0) {
+      section.style.display = 'none';
+      return;
+    }
 
-    // Bar chart
-    const chart = document.getElementById('favor-chart');
-    chart.innerHTML = '';
-    FAVOR_TIERS.forEach(tier => {
-      const count = counts[tier.key] || 0;
-      const fillH = count === 0 ? 3 : Math.max(8, Math.round((count / maxCount) * BAR_MAX_PX));
-      const opacity = count === 0 ? 0.2 : 0.85;
-      const col = document.createElement('div');
-      col.className = 'favor-tier';
-      col.innerHTML = `
-        <div class="favor-count" style="color:${count > 0 ? tier.color : 'var(--muted)'}">${count > 0 ? count : ''}</div>
-        <div class="favor-bar-wrap">
-          <div class="favor-bar-fill" style="height:${fillH}px;background:${tier.color};opacity:${opacity}"></div>
+    // Sort by rank (highest first), then alphabetically by name
+    npcList.sort((a, b) => b.rank - a.rank || a.name.localeCompare(b.name));
+
+    // Render NPC cards
+    const grid = document.getElementById('favor-grid');
+    grid.innerHTML = '';
+    
+    npcList.forEach(npc => {
+      const tier = FAVOR_TIERS[npc.rank];
+      const card = document.createElement('div');
+      card.className = 'favor-card';
+      card.innerHTML = `
+        <div class="favor-dot" style="background:${tier.color}"></div>
+        <div class="favor-info">
+          <div class="favor-npc-name" title="${npc.name}">${npc.name}</div>
+          <div class="favor-level-text">${tier.label}</div>
         </div>
-        <div class="favor-label">${tier.label}</div>
       `;
-      chart.appendChild(col);
-    });
-
-    // Top NPC chips (Friends+, sorted by tier desc then name)
-    const topNpcs = npcList
-      .filter(n => n.rank >= 3)
-      .sort((a, b) => b.rank - a.rank || a.name.localeCompare(b.name))
-      .slice(0, 12);
-
-    const chipsEl = document.getElementById('top-npcs');
-    chipsEl.innerHTML = '';
-    topNpcs.forEach(n => {
-      const tier = FAVOR_TIERS[n.rank];
-      const chip = document.createElement('div');
-      chip.className = 'npc-chip';
-      chip.title = tier.label;
-      chip.innerHTML = `<div class="npc-dot" style="background:${tier.color}"></div>${n.name}`;
-      chipsEl.appendChild(chip);
+      grid.appendChild(card);
     });
 
     section.style.display = 'block';
