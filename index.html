@@ -534,12 +534,12 @@
   </div>
 
   <div class="tabs-container">
-    <div class="tabs-nav">
-      <button class="tab-button active" data-tab="skills">Skills</button>
-      <button class="tab-button" data-tab="npcs">NPC Relations</button>
+    <div class="tabs-nav" role="tablist">
+      <button class="tab-button active" data-tab="skills" role="tab" aria-selected="true" aria-controls="skills-tab">Skills</button>
+      <button class="tab-button" data-tab="npcs" role="tab" aria-selected="false" aria-controls="npcs-tab">NPC Relations</button>
     </div>
 
-    <div id="skills-tab" class="tab-content active">
+    <div id="skills-tab" class="tab-content active" role="tabpanel" aria-labelledby="skills-tab-button">
       <div class="controls">
         <input type="text" id="search-input" placeholder="Search skills…" />
         <select id="sort-select">
@@ -557,7 +557,7 @@
       <div id="skill-grid"></div>
     </div>
 
-    <div id="npcs-tab" class="tab-content">
+    <div id="npcs-tab" class="tab-content" role="tabpanel" aria-labelledby="npcs-tab-button">
       <div id="favor-section-content"></div>
     </div>
   </div>
@@ -677,8 +677,8 @@
     
     if (charData.Report) charInfo.push({ label: 'Report Type', value: charData.Report });
     if (charData.ReportVersion) charInfo.push({ label: 'Version', value: charData.ReportVersion });
-    if (charData.ActiveQuests) charInfo.push({ label: 'Active Quests', value: charData.ActiveQuests.length });
-    if (charData.ActiveWorkOrders) charInfo.push({ label: 'Work Orders', value: charData.ActiveWorkOrders.length });
+    if (Array.isArray(charData.ActiveQuests)) charInfo.push({ label: 'Active Quests', value: charData.ActiveQuests.length });
+    if (Array.isArray(charData.ActiveWorkOrders)) charInfo.push({ label: 'Work Orders', value: charData.ActiveWorkOrders.length });
     if (charData.Currencies) {
       if (charData.Currencies.COMBAT_WISDOM) charInfo.push({ label: 'Combat Wisdom', value: charData.Currencies.COMBAT_WISDOM });
       if (charData.Currencies.GUILDCREDITS) charInfo.push({ label: 'Guild Credits', value: charData.Currencies.GUILDCREDITS });
@@ -968,11 +968,15 @@
     button.addEventListener('click', () => {
       const targetTab = button.dataset.tab;
       
-      // Update active states
-      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+      // Update active states and ARIA attributes
+      document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+        btn.setAttribute('aria-selected', 'false');
+      });
       document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
       
       button.classList.add('active');
+      button.setAttribute('aria-selected', 'true');
       document.getElementById(`${targetTab}-tab`).classList.add('active');
     });
   });
