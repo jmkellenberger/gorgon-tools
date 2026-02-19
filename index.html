@@ -594,11 +594,18 @@
     const search = searchInput.value.toLowerCase();
     const sort = sortSelect.value;
 
-    // Check if a skill has subskills (e.g., Anatomy has Anatomy_Elves, Anatomy_Orcs, etc.)
-    function hasSubskills(skillKey) {
-      const prefix = skillKey + '_';
-      return Object.keys(charData.Skills).some(key => key.startsWith(prefix));
-    }
+    // Pre-compute set of skills that have subskills for O(n) performance
+    const skillKeys = Object.keys(charData.Skills);
+    const parentSkills = new Set();
+    skillKeys.forEach(key => {
+      const underscoreIdx = key.indexOf('_');
+      if (underscoreIdx > 0) {
+        const parent = key.substring(0, underscoreIdx);
+        if (skillKeys.includes(parent)) {
+          parentSkills.add(parent);
+        }
+      }
+    });
 
     // Build skill list
     let skills = Object.entries(charData.Skills)
@@ -611,7 +618,7 @@
         effectiveLevel: (val.Level || 0) + (useBonus ? (val.BonusLevels || 0) : 0),
         xpToward: val.XpTowardNextLevel || 0,
         xpNeeded: val.XpNeededForNextLevel || 0,
-        hasSubskills: hasSubskills(key),
+        hasSubskills: parentSkills.has(key),
       }));
 
     // Totals (exclude parent skills that have subskills to avoid double-counting)
@@ -619,6 +626,7 @@
     const skillsForTotal = allSkills.filter(sk => !sk.hasSubskills);
     const totalBase = skillsForTotal.reduce((s, sk) => s + sk.level, 0);
     const totalEffective = skillsForTotal.reduce((s, sk) => s + sk.effectiveLevel, 0);
+    // Note: skillCount and maxSkill use allSkills to include all skills in these statistics
     const skillCount = allSkills.filter(sk => sk.level > 0).length;
     const maxSkill = allSkills.reduce((m, sk) => sk.level > m ? sk.level : m, 0);
 
