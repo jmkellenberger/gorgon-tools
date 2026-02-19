@@ -267,6 +267,37 @@
 
     .skill-card:hover { border-color: var(--accent); }
 
+    .skill-card.parent-skill {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .skill-card.child-skill {
+      margin-left: 1.5rem;
+      border-left: 2px solid var(--border);
+      background: var(--surface2);
+    }
+
+    .skill-card.child-skill.collapsed {
+      display: none;
+    }
+
+    .collapse-indicator {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      color: var(--muted);
+      transition: transform 0.2s;
+    }
+
+    .skill-card.parent-skill.expanded .collapse-indicator {
+      transform: rotate(90deg);
+    }
+
     .skill-level {
       font-size: 1.1rem;
       font-weight: 700;
@@ -584,6 +615,9 @@
 
   let charData = null;
 
+  // Store collapse state for parent skills
+  const collapsedSkills = new Set();
+
   // Format skill key into readable name
   function formatSkillName(key) {
     // Handle Anatomy_X → Anatomy (X)
@@ -598,6 +632,27 @@
     }
     // CamelCase → words
     return key.replace(/([A-Z])/g, ' $1').trim();
+  }
+
+  // Get child skill display name (just the part after underscore)
+  function getChildSkillName(key) {
+    const underscoreIdx = key.indexOf('_');
+    if (underscoreIdx > 0) {
+      return key.substring(underscoreIdx + 1).replace(/([A-Z])/g, ' $1').trim();
+    }
+    return key;
+  }
+
+  // Check if a skill is a child of a parent
+  function getParentSkill(key, skillKeys) {
+    const underscoreIdx = key.indexOf('_');
+    if (underscoreIdx > 0) {
+      const parent = key.substring(0, underscoreIdx);
+      if (skillKeys.includes(parent)) {
+        return parent;
+      }
+    }
+    return null;
   }
 
   function showError(msg) {
@@ -638,12 +693,15 @@
     // Pre-compute set of skills that have subskills for O(n) performance
     const skillKeys = Object.keys(charData.Skills);
     const parentSkills = new Set();
+    const childToParent = new Map();
+    
     skillKeys.forEach(key => {
       const underscoreIdx = key.indexOf('_');
       if (underscoreIdx > 0) {
         const parent = key.substring(0, underscoreIdx);
         if (skillKeys.includes(parent)) {
           parentSkills.add(parent);
+          childToParent.set(key, parent);
         }
       }
     });
@@ -661,6 +719,8 @@
         xpToward: val.XpTowardNextLevel || 0,
         xpNeeded: val.XpNeededForNextLevel || 0,
         hasSubskills: parentSkills.has(key),
+        parent: childToParent.get(key) || null,
+        isChild: childToParent.has(key),
       }));
 
     // Totals (exclude parent skills that have subskills to avoid double-counting)
@@ -741,19 +801,124 @@
     // Render grid
     const grid = document.getElementById('skill-grid');
     grid.innerHTML = '';
+    
+    // Group skills by parent for efficient rendering
+    const skillsByParent = new Map();
+    const topLevelSkills = [];
+    
     displayed.forEach(sk => {
+      if (sk.isChild && sk.parent) {
+        if (!skillsByParent.has(sk.parent)) {
+          skillsByParent.set(sk.parent, []);
+        }
+        skillsByParent.get(sk.parent).push(sk);
+      } else {
+        topLevelSkills.push(sk);
+      }
+    });
+    
+    topLevelSkills.forEach(sk => {
       const xpPct = sk.xpNeeded > 0 ? Math.min(100, (sk.xpToward / sk.xpNeeded) * 100) : (sk.xpNeeded === -1 ? 100 : 0);
       const card = document.createElement('div');
       card.className = 'skill-card';
-      card.innerHTML = `
-        <div class="skill-level">${sk.effectiveLevel}</div>
-        <div class="skill-info">
-          <div class="skill-name" title="${sk.name}">${sk.name}</div>
-          <div class="skill-xp-bar"><div class="skill-xp-fill" style="width:${xpPct}%"></div></div>
-          ${sk.bonus > 0 ? `<div class="skill-bonus">+${sk.bonus} bonus</div>` : ''}
-        </div>
-      `;
+      
+      // Add parent-skill class and expanded state if it has children
+      const children = skillsByParent.get(sk.key) || [];
+      if (sk.hasSubskills && children.length > 0) {
+        card.className += ' parent-skill';
+        if (!collapsedSkills.has(sk.key)) {
+          card.className += ' expanded';
+        }
+        
+        // Add collapse indicator
+        const collapseIndicator = document.createElement('div');
+        collapseIndicator.className = 'collapse-indicator';
+        collapseIndicator.innerHTML = '▸';
+        card.appendChild(collapseIndicator);
+        
+        // Add click handler for collapse/expand
+        card.addEventListener('click', () => {
+          if (collapsedSkills.has(sk.key)) {
+            collapsedSkills.delete(sk.key);
+          } else {
+            collapsedSkills.add(sk.key);
+          }
+          render();
+        });
+      }
+      
+      const levelDiv = document.createElement('div');
+      levelDiv.className = 'skill-level';
+      levelDiv.textContent = sk.effectiveLevel;
+      card.appendChild(levelDiv);
+      
+      const infoDiv = document.createElement('div');
+      infoDiv.className = 'skill-info';
+      
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'skill-name';
+      nameDiv.title = sk.name;
+      nameDiv.textContent = sk.name;
+      infoDiv.appendChild(nameDiv);
+      
+      const xpBar = document.createElement('div');
+      xpBar.className = 'skill-xp-bar';
+      const xpFill = document.createElement('div');
+      xpFill.className = 'skill-xp-fill';
+      xpFill.style.width = xpPct + '%';
+      xpBar.appendChild(xpFill);
+      infoDiv.appendChild(xpBar);
+      
+      if (sk.bonus > 0) {
+        const bonusDiv = document.createElement('div');
+        bonusDiv.className = 'skill-bonus';
+        bonusDiv.textContent = '+' + sk.bonus + ' bonus';
+        infoDiv.appendChild(bonusDiv);
+      }
+      
+      card.appendChild(infoDiv);
       grid.appendChild(card);
+      
+      // Render child skills if parent is not collapsed
+      if (children.length > 0 && !collapsedSkills.has(sk.key)) {
+        children.forEach(childSk => {
+          const childXpPct = childSk.xpNeeded > 0 ? Math.min(100, (childSk.xpToward / childSk.xpNeeded) * 100) : (childSk.xpNeeded === -1 ? 100 : 0);
+          const childCard = document.createElement('div');
+          childCard.className = 'skill-card child-skill';
+          
+          const childLevelDiv = document.createElement('div');
+          childLevelDiv.className = 'skill-level';
+          childLevelDiv.textContent = childSk.effectiveLevel;
+          childCard.appendChild(childLevelDiv);
+          
+          const childInfoDiv = document.createElement('div');
+          childInfoDiv.className = 'skill-info';
+          
+          const childNameDiv = document.createElement('div');
+          childNameDiv.className = 'skill-name';
+          childNameDiv.title = getChildSkillName(childSk.key);
+          childNameDiv.textContent = getChildSkillName(childSk.key);
+          childInfoDiv.appendChild(childNameDiv);
+          
+          const childXpBar = document.createElement('div');
+          childXpBar.className = 'skill-xp-bar';
+          const childXpFill = document.createElement('div');
+          childXpFill.className = 'skill-xp-fill';
+          childXpFill.style.width = childXpPct + '%';
+          childXpBar.appendChild(childXpFill);
+          childInfoDiv.appendChild(childXpBar);
+          
+          if (childSk.bonus > 0) {
+            const childBonusDiv = document.createElement('div');
+            childBonusDiv.className = 'skill-bonus';
+            childBonusDiv.textContent = '+' + childSk.bonus + ' bonus';
+            childInfoDiv.appendChild(childBonusDiv);
+          }
+          
+          childCard.appendChild(childInfoDiv);
+          grid.appendChild(childCard);
+        });
+      }
     });
 
     if (displayed.length === 0) {
