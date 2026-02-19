@@ -677,7 +677,8 @@
         <div class="skill-level">${sk.effectiveLevel}</div>
         <div class="skill-info">
           <div class="skill-name" title="${sk.name}">${sk.name}</div>
-          ${sk.bonus > 0 ? `<div class="skill-xp-bar"><div class="skill-xp-fill" style="width:${xpPct}%"></div></div><div class="skill-bonus">+${sk.bonus} bonus</div>` : `<div class="skill-xp-bar"><div class="skill-xp-fill" style="width:${xpPct}%"></div></div>`}
+          <div class="skill-xp-bar"><div class="skill-xp-fill" style="width:${xpPct}%"></div></div>
+          ${sk.bonus > 0 ? `<div class="skill-bonus">+${sk.bonus} bonus</div>` : ''}
         </div>
       `;
       grid.appendChild(card);
