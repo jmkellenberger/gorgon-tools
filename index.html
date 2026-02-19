@@ -130,6 +130,25 @@
       margin-top: 0.2rem;
     }
 
+    .char-info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .char-info-item {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .char-info-item strong {
+      color: var(--text);
+      display: block;
+      font-size: 0.8rem;
+      margin-bottom: 0.1rem;
+    }
+
     /* Total level badge */
     .total-level {
       background: linear-gradient(135deg, #2a1f00, #1a1200);
@@ -327,6 +346,49 @@
       margin-bottom: 0.85rem;
     }
 
+    /* Tabs */
+    .tabs-container {
+      margin-bottom: 1.5rem;
+    }
+
+    .tabs-nav {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 1.5rem;
+    }
+
+    .tab-button {
+      background: none;
+      border: none;
+      color: var(--muted);
+      padding: 0.75rem 1.25rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      position: relative;
+      transition: color 0.2s;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+    }
+
+    .tab-button:hover {
+      color: var(--text);
+    }
+
+    .tab-button.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
     /* NPC Favor */
     #favor-section { margin-bottom: 1.75rem; }
 
@@ -423,6 +485,12 @@
       border-radius: 2px;
     }
 
+    /* Empty message styling */
+    .empty-message {
+      color: var(--muted);
+      font-size: 0.875rem;
+    }
+
     /* Scrollback to top of skill grid on mobile */
     @media (max-width: 480px) {
       #skill-grid { grid-template-columns: 1fr 1fr; }
@@ -454,6 +522,7 @@
     <div class="char-name">
       <h2 id="char-name-text"></h2>
       <p id="char-meta-text"></p>
+      <div class="char-info-grid" id="char-info-grid"></div>
     </div>
     <div class="total-level">
       <div class="label">Total Level</div>
@@ -464,33 +533,40 @@
 
   <div class="stats-row" id="stats-row"></div>
 
-  <div id="favor-section" style="display:none">
-    <div class="section-title">NPC Relations</div>
-    <div class="favor-grid" id="favor-grid"></div>
-  </div>
-
   <div id="crafting-section" style="display:none">
     <div class="section-title">Crafting</div>
     <div class="craft-summary" id="craft-summary"></div>
     <div class="craft-grid" id="craft-grid"></div>
   </div>
 
-  <div class="section-title">Skills</div>
-  <div class="controls">
-    <input type="text" id="search-input" placeholder="Search skills…" />
-    <select id="sort-select">
-      <option value="level-desc">Level (high → low)</option>
-      <option value="level-asc">Level (low → high)</option>
-      <option value="name-asc">Name (A → Z)</option>
-      <option value="name-desc">Name (Z → A)</option>
-    </select>
-    <label class="toggle-label">
-      <input type="checkbox" id="hide-zero" />
-      Hide level 0
-    </label>
-  </div>
+  <div class="tabs-container">
+    <div class="tabs-nav" role="tablist">
+      <button id="skills-tab-button" class="tab-button active" data-tab="skills" role="tab" aria-selected="true" aria-controls="skills-tab">Skills</button>
+      <button id="npcs-tab-button" class="tab-button" data-tab="npcs" role="tab" aria-selected="false" aria-controls="npcs-tab">NPC Relations</button>
+    </div>
 
-  <div id="skill-grid"></div>
+    <div id="skills-tab" class="tab-content active" role="tabpanel" aria-labelledby="skills-tab-button">
+      <div class="controls">
+        <input type="text" id="search-input" placeholder="Search skills…" />
+        <select id="sort-select">
+          <option value="level-desc">Level (high → low)</option>
+          <option value="level-asc">Level (low → high)</option>
+          <option value="name-asc">Name (A → Z)</option>
+          <option value="name-desc">Name (Z → A)</option>
+        </select>
+        <label class="toggle-label">
+          <input type="checkbox" id="hide-zero" />
+          Hide level 0
+        </label>
+      </div>
+
+      <div id="skill-grid"></div>
+    </div>
+
+    <div id="npcs-tab" class="tab-content" role="tabpanel" aria-labelledby="npcs-tab-button">
+      <div id="favor-section-content"></div>
+    </div>
+  </div>
 
   <button id="reset-btn" type="button">Load a different character</button>
 </div>
@@ -600,6 +676,25 @@
     document.getElementById('char-meta-text').textContent =
       [charData.Race, charData.Timestamp].filter(Boolean).join(' · ');
 
+    // Populate character info grid with additional information
+    const charInfoGrid = document.getElementById('char-info-grid');
+    charInfoGrid.innerHTML = '';
+    const charInfo = [];
+    
+    if (charData.Report) charInfo.push({ label: 'Report Type', value: charData.Report });
+    if (charData.ReportVersion) charInfo.push({ label: 'Version', value: charData.ReportVersion });
+    if (Array.isArray(charData.ActiveQuests)) charInfo.push({ label: 'Active Quests', value: charData.ActiveQuests.length });
+    if (Array.isArray(charData.ActiveWorkOrders)) charInfo.push({ label: 'Work Orders', value: charData.ActiveWorkOrders.length });
+    if (charData.Currencies?.COMBAT_WISDOM) charInfo.push({ label: 'Combat Wisdom', value: charData.Currencies.COMBAT_WISDOM });
+    if (charData.Currencies?.GUILDCREDITS) charInfo.push({ label: 'Guild Credits', value: charData.Currencies.GUILDCREDITS });
+    
+    charInfo.forEach(info => {
+      const el = document.createElement('div');
+      el.className = 'char-info-item';
+      el.innerHTML = `<strong>${info.value}</strong>${info.label}`;
+      charInfoGrid.appendChild(el);
+    });
+
     document.getElementById('total-level-num').textContent = totalLevel.toLocaleString();
     document.getElementById('total-level-sub').textContent = `${skillCount} skills trained`;
 
@@ -663,7 +758,8 @@
 
     if (displayed.length === 0) {
       const empty = document.createElement('div');
-      empty.style.cssText = 'grid-column:1/-1;color:var(--muted);font-size:0.875rem;padding:1rem 0;';
+      empty.className = 'empty-message';
+      empty.style.cssText = 'grid-column:1/-1;padding:1rem 0;';
       empty.textContent = 'No skills match your filter.';
       grid.appendChild(empty);
     }
@@ -692,9 +788,9 @@
   const FAVOR_RANK = Object.fromEntries(FAVOR_TIERS.map((t, i) => [t.key, i]));
 
   function renderFavor(data) {
-    const section = document.getElementById('favor-section');
+    const content = document.getElementById('favor-section-content');
     if (!data.NPCs || Object.keys(data.NPCs).length === 0) {
-      section.style.display = 'none';
+      content.innerHTML = '<p class="empty-message">No NPC relations data available.</p>';
       return;
     }
 
@@ -713,34 +809,50 @@
       });
     });
 
-    // If no non-neutral NPCs, hide the section
+    // If no non-neutral NPCs, show message
     if (npcList.length === 0) {
-      section.style.display = 'none';
+      content.innerHTML = '<p class="empty-message">No non-neutral NPC relations found.</p>';
       return;
     }
 
     // Sort by rank (highest first), then alphabetically by name
     npcList.sort((a, b) => b.rank - a.rank || a.name.localeCompare(b.name));
 
-    // Render NPC cards
-    const grid = document.getElementById('favor-grid');
-    grid.innerHTML = '';
+    // Render NPC cards using DOM methods to prevent XSS
+    const grid = document.createElement('div');
+    grid.className = 'favor-grid';
     
     npcList.forEach(npc => {
       const tier = FAVOR_TIERS[npc.rank];
+      
       const card = document.createElement('div');
       card.className = 'favor-card';
-      card.innerHTML = `
-        <div class="favor-dot" style="background:${tier.color}"></div>
-        <div class="favor-info">
-          <div class="favor-npc-name" title="${npc.name}">${npc.name}</div>
-          <div class="favor-level-text">${tier.label}</div>
-        </div>
-      `;
+      
+      const dot = document.createElement('div');
+      dot.className = 'favor-dot';
+      dot.style.background = tier.color;
+      
+      const info = document.createElement('div');
+      info.className = 'favor-info';
+      
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'favor-npc-name';
+      nameDiv.title = npc.name;
+      nameDiv.textContent = npc.name;
+      
+      const levelDiv = document.createElement('div');
+      levelDiv.className = 'favor-level-text';
+      levelDiv.textContent = tier.label;
+      
+      info.appendChild(nameDiv);
+      info.appendChild(levelDiv);
+      card.appendChild(dot);
+      card.appendChild(info);
       grid.appendChild(card);
     });
-
-    section.style.display = 'block';
+    
+    content.innerHTML = '';
+    content.appendChild(grid);
   }
 
   // ── Crafting ────────────────────────────────────────────────────────────────
@@ -871,6 +983,24 @@
   document.addEventListener('paste', e => {
     const text = e.clipboardData.getData('text/plain');
     if (text.trim().startsWith('{')) parseAndRender(text);
+  });
+
+  // Tab switching
+  document.querySelectorAll('.tab-button').forEach(button => {
+    button.addEventListener('click', () => {
+      const targetTab = button.dataset.tab;
+      
+      // Update active states and ARIA attributes
+      document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+        btn.setAttribute('aria-selected', 'false');
+      });
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      
+      button.classList.add('active');
+      button.setAttribute('aria-selected', 'true');
+      document.getElementById(`${targetTab}-tab`).classList.add('active');
+    });
   });
 </script>
 </body>
