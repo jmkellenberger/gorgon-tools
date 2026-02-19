@@ -703,6 +703,10 @@
 
   // ── NPC Favor ──────────────────────────────────────────────────────────────
 
+  function trimNpcPrefix(name) {
+    return name.startsWith('NPC_') ? name.substring(4) : name;
+  }
+
   const FAVOR_TIERS = [
     { key: 'Neutral',      label: 'Neutral',      color: '#4e5964' },
     { key: 'Tolerated',    label: 'Tolerated',    color: '#6b7888' },
@@ -730,7 +734,7 @@
       const favor = npcData.FavorLevel || 'Neutral';
       if (counts[favor] !== undefined) counts[favor]++;
       else counts['Neutral']++;
-      npcList.push({ name, favor, rank: FAVOR_RANK[favor] ?? 0 });
+      npcList.push({ name: trimNpcPrefix(name), favor, rank: FAVOR_RANK[favor] ?? 0 });
     });
 
     const maxCount = Math.max(1, ...Object.values(counts));
