@@ -686,7 +686,7 @@
     const skillKeys = Object.keys(charData.Skills);
     const parentSkills = new Set();
     const childToParent = new Map();
-    
+
     skillKeys.forEach(key => {
       const underscoreIdx = key.indexOf('_');
       if (underscoreIdx > 0) {
@@ -862,7 +862,7 @@
         // Add collapse indicator before level
         const collapseIndicator = document.createElement('div');
         collapseIndicator.className = 'collapse-indicator';
-        collapseIndicator.innerHTML = '▸';
+        collapseIndicator.textContent = '▸';
         card.insertBefore(collapseIndicator, card.firstChild);
         
         // Add click handler for collapse/expand
