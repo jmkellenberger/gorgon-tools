@@ -485,6 +485,12 @@
       border-radius: 2px;
     }
 
+    /* Empty message styling */
+    .empty-message {
+      color: var(--muted);
+      font-size: 0.875rem;
+    }
+
     /* Scrollback to top of skill grid on mobile */
     @media (max-width: 480px) {
       #skill-grid { grid-template-columns: 1fr 1fr; }
@@ -754,7 +760,8 @@
 
     if (displayed.length === 0) {
       const empty = document.createElement('div');
-      empty.style.cssText = 'grid-column:1/-1;color:var(--muted);font-size:0.875rem;padding:1rem 0;';
+      empty.className = 'empty-message';
+      empty.style.cssText = 'grid-column:1/-1;padding:1rem 0;';
       empty.textContent = 'No skills match your filter.';
       grid.appendChild(empty);
     }
@@ -785,7 +792,7 @@
   function renderFavor(data) {
     const content = document.getElementById('favor-section-content');
     if (!data.NPCs || Object.keys(data.NPCs).length === 0) {
-      content.innerHTML = '<p style="color:var(--muted);font-size:0.875rem;">No NPC relations data available.</p>';
+      content.innerHTML = '<p class="empty-message">No NPC relations data available.</p>';
       return;
     }
 
@@ -806,7 +813,7 @@
 
     // If no non-neutral NPCs, show message
     if (npcList.length === 0) {
-      content.innerHTML = '<p style="color:var(--muted);font-size:0.875rem;">No non-neutral NPC relations found.</p>';
+      content.innerHTML = '<p class="empty-message">No non-neutral NPC relations found.</p>';
       return;
     }
 
