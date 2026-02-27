@@ -113,9 +113,23 @@ fn set_log_directory(
 }
 
 fn main() {
+    // On Windows, GUI apps have no console — write panics/errors to a log file
+    // so crashes are diagnosable.
+    let log_path = std::env::current_exe()
+        .ok()
+        .and_then(|p| p.parent().map(|d| d.join("survey-app.log")));
+    if let Some(ref path) = log_path {
+        let _ = std::panic::set_hook({
+            let path = path.clone();
+            Box::new(move |info| {
+                let _ = std::fs::write(&path, format!("PANIC: {info}"));
+            })
+        });
+    }
+
     let shared_state: SharedState = Arc::new(Mutex::new(AppState::default()));
 
-    tauri::Builder::default()
+    let result = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(shared_state)
         .manage(Mutex::new(None::<FileWatcher>))
@@ -130,6 +144,13 @@ fn main() {
             clear_surveys,
             set_log_directory,
         ])
-        .run(tauri::generate_context!())
-        .expect("error running tauri application");
+        .run(tauri::generate_context!());
+
+    if let Err(e) = result {
+        let msg = format!("Failed to start: {e}");
+        if let Some(ref path) = log_path {
+            let _ = std::fs::write(path, &msg);
+        }
+        eprintln!("{msg}");
+    }
 }
