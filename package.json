@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "build": "esbuild app.js --bundle --minify --outfile=dist/app.js && esbuild styles.css --minify --outfile=dist/styles.css && cp index.html dist/"
+    "build": "cp site-index.html dist/index.html && esbuild app.js --bundle --minify --outfile=dist/armory/app.js && esbuild styles.css --minify --outfile=dist/armory/styles.css && cp index.html dist/armory/ && esbuild survey/app.js --bundle --minify --outfile=dist/survey/app.js && esbuild survey/styles.css --minify --outfile=dist/survey/styles.css && cp survey/index.html dist/survey/ && cp -r survey/assets dist/survey/"
   },
   "dependencies": {
     "pako": "^2.1.0"

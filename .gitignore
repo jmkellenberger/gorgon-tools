@@ -13,6 +13,9 @@ Thumbs.db
 .idea/
 *.sublime-*
 
+# Dependencies
+node_modules/
+
 # Build artifacts
 dist/
 build/

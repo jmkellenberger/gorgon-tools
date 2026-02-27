@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Survey Helper — Gorgon Tools</title>
+  <link rel="icon" type="image/png" href="assets/dorf_favicon.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header>
+  <h1><a href="/">Survey Helper</a></h1>
+</header>
+
+<div class="app-layout">
+
+  <!-- Map (always visible, front and center) -->
+  <div class="map-section">
+    <div class="controls">
+      <select id="zone-select">
+        <option value="Serbule" selected>Serbule</option>
+        <option value="Serbule Hills">Serbule Hills</option>
+        <option value="Eltibule">Eltibule</option>
+        <option value="Ilmari">Ilmari</option>
+        <option value="Kur Mountains">Kur Mountains</option>
+      </select>
+      <!-- <select id="survey-type-select">
+        <option value="regular">Regular Survey</option>
+        <option value="motherlode">Motherlode</option>
+      </select> -->
+      <button class="btn" id="find-btn" type="button">Find Surveys</button>
+      <button class="btn btn-secondary" id="clear-btn" type="button">Clear</button>
+      <label class="toggle-label">
+        <input type="checkbox" id="renumber-toggle" />
+        Renumber on visit
+      </label>
+    </div>
+
+    <div class="map-container" id="map-container">
+      <img class="zone-map" id="zone-map" src="assets/serbule_map.webp" alt="Zone Map" />
+      <!-- survey dots + player icons injected here by JS -->
+    </div>
+
+    <div id="results-bar" style="display: none">
+      <div class="result-summary" id="result-summary"></div>
+      <div class="resource-pills" id="resource-pills"></div>
+    </div>
+  </div>
+
+  <!-- Input section (below map) -->
+  <div class="sidebar-cards">
+    <div class="card" id="input-card">
+      <div class="card-title">Chat Log Input</div>
+
+      <div class="drop-zone" id="drop-zone" role="button" tabindex="0" aria-label="Drop chat log .txt file here or click to choose">
+        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M9 13.5l3 3m0 0l3-3m-3 3v-6m1.06-4.19l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+        </svg>
+        <p><strong>Drag &amp; drop</strong> a chat log .txt file</p>
+      </div>
+      <input type="file" class="file-input" id="file-input" accept=".txt,text/plain" />
+
+      <div style="margin-top: 0.75rem">
+        <textarea id="chat-log" placeholder="…or paste chat log text here"></textarea>
+      </div>
+    </div>
+
+    <!-- Motherlode second log (hidden until feature exposed) -->
+    <!-- <div class="card" id="motherlode-card" style="display: none">
+      <div class="card-title">Motherlode — Location B</div>
+      <textarea id="motherlode-log-b" placeholder="Paste chat log from second position here"></textarea>
+    </div> -->
+
+    <div class="card checklist">
+      <div class="card-title">How To Use</div>
+      <ol>
+        <li>Check all your surveys in-game, one at a time.</li>
+        <li>Drag the gold marker to where you stood when checking.</li>
+        <li>Paste your chat log above and click Find Surveys.</li>
+        <li>Click numbered dots on the map to mark them visited.</li>
+        <li>Plan your route and survey away!</li>
+      </ol>
+    </div>
+  </div>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

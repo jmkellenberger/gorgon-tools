@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>witchspace.ink</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #1e2326;
+      --surface: #272e33;
+      --border: #374145;
+      --text: #d3c6aa;
+      --muted: #7a8478;
+      --accent: #7fbbb3;
+      --gold: #dbbc7f;
+      --radius: 8px;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 0.02em;
+      margin-bottom: 0.35rem;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 2.5rem;
+    }
+    .tools {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .tool-link {
+      display: block;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem 2rem;
+      text-decoration: none;
+      transition: border-color 0.15s;
+      min-width: 180px;
+      text-align: center;
+    }
+    .tool-link:hover { border-color: var(--accent); }
+    .tool-name {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .tool-desc {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.35rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>witchspace.ink</h1>
+  <p class="subtitle">Gorgon tools</p>
+  <div class="tools">
+    <a class="tool-link" href="armory/">
+      <div class="tool-name">Gorgon Armory</div>
+      <div class="tool-desc">Character sheet viewer</div>
+    </a>
+    <a class="tool-link" href="survey/">
+      <div class="tool-name">Survey Helper</div>
+      <div class="tool-desc">Survey map plotter</div>
+    </a>
+  </div>
+</body>
+</html>
