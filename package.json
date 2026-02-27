@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "scripts": {
+    "build": "esbuild app.js --minify --outfile=dist/app.js && esbuild styles.css --minify --outfile=dist/styles.css && cp index.html dist/"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  }
+}

@@ -102,7 +102,7 @@ function buildSharePayload() {
         MAX_POWER: charData.CurrentStats.MAX_POWER,
       };
     }
-    // Skills — compact: { key: [level, bonus, xpToward, xpNeeded, abilities[]] }
+    // Skills — compact: { key: [level, bonus, xpToward, xpNeeded] }
     const sk = {};
     Object.entries(charData.Skills).forEach(([key, val]) => {
       if (key === 'Unknown') return;
@@ -111,19 +111,9 @@ function buildSharePayload() {
         val.BonusLevels || 0,
         val.XpTowardNextLevel || 0,
         val.XpNeededForNextLevel || 0,
-        val.Abilities || [],
       ];
     });
     payload.Sk = sk;
-    // NPCs — non-neutral only
-    if (charData.NPCs) {
-      const npc = {};
-      Object.entries(charData.NPCs).forEach(([name, data]) => {
-        const favor = data.FavorLevel || 'Neutral';
-        if (favor !== 'Neutral') npc[name] = favor;
-      });
-      if (Object.keys(npc).length > 0) payload.NPC = npc;
-    }
   }
   // Inventory — on-person items (no StorageVault)
   if (itemsData && itemsData.Items) {
@@ -210,13 +200,6 @@ function expandSharePayload(p) {
         };
       });
       charData.Skills = skills;
-    }
-    if (p.NPC) {
-      const npcs = {};
-      Object.entries(p.NPC).forEach(([name, favor]) => {
-        npcs[name] = { FavorLevel: favor };
-      });
-      charData.NPCs = npcs;
     }
   }
   if (p.Eq) {
