@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gorgon Armory</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header>
+  <h1>Gorgon Armory</h1>
+</header>
+
+<div id="drop-zone" role="button" tabindex="0" aria-label="Drop JSON file here or click to choose">
+  <div class="drop-zone-content">
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+      <path stroke-linecap="round" stroke-linejoin="round"
+        d="M9 13.5l3 3m0 0l3-3m-3 3v-6m1.06-4.19l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+    </svg>
+    <p><strong>Drag &amp; drop</strong> your character JSON here</p>
+    <p style="margin-top:0.25rem">or</p>
+  </div>
+  <button class="btn" id="pick-btn" type="button">Choose File</button>
+  <input type="file" id="file-input" accept=".json,application/json" multiple />
+</div>
+
+<div class="error-msg" id="error-msg"></div>
+
+<div id="output">
+  <div id="share-banner" style="display:none"></div>
+  <div class="char-header">
+    <div class="char-identity">
+      <div class="char-identity-row">
+        <h2 id="char-name-text"></h2>
+        <button id="share-btn" type="button">Share</button>
+      </div>
+      <div class="char-identity-meta">
+        <span id="char-race" class="identity-pill"></span>
+        <span id="char-server" class="identity-pill"></span>
+      </div>
+      <div class="char-top-skills" id="char-top-skills"></div>
+    </div>
+    <div class="char-combat-stats" id="char-combat-stats"></div>
+    <div class="total-level">
+      <div class="label">Total Level</div>
+      <div class="number" id="total-level-num">0</div>
+      <div class="sub" id="total-level-sub"></div>
+    </div>
+  </div>
+
+  <div class="tabs-container">
+    <div class="tabs-nav" role="tablist">
+      <button id="skills-tab-button" class="tab-button active" data-tab="skills" role="tab" aria-selected="true" aria-controls="skills-tab">Skills</button>
+      <button id="npcs-tab-button" class="tab-button" data-tab="npcs" role="tab" aria-selected="false" aria-controls="npcs-tab">NPC Favor</button>
+      <button id="favors-tab-button" class="tab-button" data-tab="favors" role="tab" aria-selected="false" aria-controls="favors-tab">Active Favors</button>
+      <button id="currencies-tab-button" class="tab-button" data-tab="currencies" role="tab" aria-selected="false" aria-controls="currencies-tab">Currencies</button>
+      <button id="crafting-tab-button" class="tab-button" data-tab="crafting" role="tab" aria-selected="false" aria-controls="crafting-tab">Crafting</button>
+      <button id="storage-tab-button" class="tab-button" data-tab="storage" role="tab" aria-selected="false" aria-controls="storage-tab">Storage</button>
+    </div>
+
+    <div id="skills-tab" class="tab-content active" role="tabpanel" aria-labelledby="skills-tab-button">
+      <div class="tab-upload-prompt" id="skills-upload-prompt" style="display:none">
+        <p>Drop your <strong>character sheet</strong> JSON here to see skills</p>
+      </div>
+      <div class="controls">
+        <input type="text" id="search-input" placeholder="Search skills…" />
+        <select id="sort-select">
+          <option value="level-desc">Level (high → low)</option>
+          <option value="level-asc">Level (low → high)</option>
+          <option value="name-asc">Name (A → Z)</option>
+          <option value="name-desc">Name (Z → A)</option>
+        </select>
+      </div>
+      <div id="skill-grid"></div>
+    </div>
+
+    <div id="npcs-tab" class="tab-content" role="tabpanel" aria-labelledby="npcs-tab-button">
+      <div class="tab-upload-prompt" id="npcs-upload-prompt" style="display:none">
+        <p>Drop your <strong>character sheet</strong> JSON here to see NPC favor</p>
+      </div>
+      <div id="favor-summary-chips"></div>
+      <div id="favor-section-content"></div>
+    </div>
+
+    <div id="favors-tab" class="tab-content" role="tabpanel" aria-labelledby="favors-tab-button">
+      <div class="tab-upload-prompt" id="favors-upload-prompt" style="display:none">
+        <p>Drop your <strong>character sheet</strong> JSON here to see active favors</p>
+      </div>
+      <div id="favors-content"></div>
+    </div>
+
+    <div id="currencies-tab" class="tab-content" role="tabpanel" aria-labelledby="currencies-tab-button">
+      <div class="tab-upload-prompt" id="currencies-upload-prompt" style="display:none">
+        <p>Drop your <strong>character sheet</strong> JSON here to see currencies</p>
+      </div>
+      <div id="currencies-content"></div>
+    </div>
+
+    <div id="crafting-tab" class="tab-content" role="tabpanel" aria-labelledby="crafting-tab-button">
+      <div class="tab-upload-prompt" id="crafting-upload-prompt" style="display:none">
+        <p>Drop your <strong>character sheet</strong> JSON here to see crafting</p>
+      </div>
+      <div id="crafting-content">
+        <div class="craft-summary" id="craft-summary"></div>
+        <div class="craft-grid" id="craft-grid"></div>
+      </div>
+    </div>
+
+    <div id="storage-tab" class="tab-content" role="tabpanel" aria-labelledby="storage-tab-button">
+      <div class="tab-upload-prompt" id="storage-upload-prompt" style="display:none">
+        <p>Drop your <strong>storage</strong> JSON here to see inventory</p>
+      </div>
+      <div id="storage-content"></div>
+    </div>
+  </div>
+
+  <button id="reset-btn" type="button">Load different data</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
