@@ -1,7 +1,10 @@
 {
   "private": true,
   "scripts": {
-    "build": "esbuild app.js --minify --outfile=dist/app.js && esbuild styles.css --minify --outfile=dist/styles.css && cp index.html dist/"
+    "build": "esbuild app.js --bundle --minify --outfile=dist/app.js && esbuild styles.css --minify --outfile=dist/styles.css && cp index.html dist/"
+  },
+  "dependencies": {
+    "pako": "^2.1.0"
   },
   "devDependencies": {
     "esbuild": "^0.24.0"

@@ -1,3 +1,5 @@
+import pako from 'pako';
+
 const dropZone = document.getElementById('drop-zone');
 const fileInput = document.getElementById('file-input');
 const pickBtn = document.getElementById('pick-btn');
