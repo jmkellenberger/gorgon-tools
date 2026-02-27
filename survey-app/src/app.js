@@ -3,7 +3,15 @@
 
 const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
-const { open } = window.__TAURI__.dialog;
+
+// Tauri v2 dialog plugin is exposed under its own global
+const dialogOpen = () => {
+  const api = window.__TAURI_PLUGIN_DIALOG__;
+  if (api && api.open) return api.open;
+  // Fallback: some Tauri v2 builds expose it here
+  if (window.__TAURI__.dialog) return window.__TAURI__.dialog.open;
+  return null;
+};
 
 const ZONE_MAPS = {
   'Serbule':       'assets/serbule_map.webp',
@@ -66,16 +74,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Browse for log directory
   $('#browse-btn').addEventListener('click', async () => {
-    const dir = await open({ directory: true, title: 'Select ChatLogs folder' });
-    if (dir) {
-      try {
+    const openFn = dialogOpen();
+    if (!openFn) {
+      $('#log-status').textContent = 'Error: dialog plugin not available';
+      return;
+    }
+    try {
+      const dir = await openFn({ directory: true, title: 'Select ChatLogs folder' });
+      if (dir) {
         const payload = await invoke('set_log_directory', { path: dir });
         $('#log-dir').value = dir;
         $('#log-status').textContent = 'Watching for chat log changes...';
         render(payload);
-      } catch (e) {
-        $('#log-status').textContent = 'Error: ' + e;
       }
+    } catch (e) {
+      $('#log-status').textContent = 'Error: ' + e;
     }
   });
 
