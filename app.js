@@ -116,22 +116,14 @@ function buildSharePayload() {
       ];
     });
     payload.Sk = sk;
-  }
-  // Inventory — on-person items (no StorageVault)
-  if (itemsData && itemsData.Items) {
-    const onPerson = itemsData.Items.filter(it => !it.StorageVault);
-    if (onPerson.length > 0) {
-      payload.Eq = onPerson.map(it => {
-        const entry = { N: it.Name };
-        if (it.Slot) entry.S = it.Slot;
-        if (it.Rarity && it.Rarity !== 'Common') entry.R = it.Rarity;
-        if (it.Level) entry.L = it.Level;
-        if ((it.StackSize || 1) > 1) entry.Q = it.StackSize;
-        if (it.TSysPowers && it.TSysPowers.length > 0) {
-          entry.P = it.TSysPowers.map(p => ({ T: p.Tier, P: p.Power }));
-        }
-        return entry;
+    // NPCs — non-neutral only
+    if (charData.NPCs) {
+      const npc = {};
+      Object.entries(charData.NPCs).forEach(([name, data]) => {
+        const favor = data.FavorLevel || 'Neutral';
+        if (favor !== 'Neutral') npc[name] = favor;
       });
+      if (Object.keys(npc).length > 0) payload.NPC = npc;
     }
   }
   return payload;
@@ -203,18 +195,13 @@ function expandSharePayload(p) {
       });
       charData.Skills = skills;
     }
-  }
-  if (p.Eq) {
-    const items = p.Eq.map(it => {
-      const item = { Name: it.N };
-      if (it.S) item.Slot = it.S;
-      if (it.R) item.Rarity = it.R;
-      if (it.L) item.Level = it.L;
-      if (it.Q) item.StackSize = it.Q;
-      if (it.P) item.TSysPowers = it.P.map(pw => ({ Tier: pw.T, Power: pw.P }));
-      return item;
-    });
-    itemsData = { Items: items };
+    if (p.NPC) {
+      const npcs = {};
+      Object.entries(p.NPC).forEach(([name, favor]) => {
+        npcs[name] = { FavorLevel: favor };
+      });
+      charData.NPCs = npcs;
+    }
   }
 }
 
@@ -316,13 +303,13 @@ function renderAll() {
   const storageBtn = document.getElementById('storage-tab-button');
 
   if (isShareMode) {
-    // Share mode: only show Skills, NPC Favor, Storage
+    // Share mode: only show Skills and NPC Favor
     skillsBtn.style.display = charData ? '' : 'none';
     npcsBtn.style.display = charData && charData.NPCs ? '' : 'none';
     favorsBtn.style.display = 'none';
     currenciesBtn.style.display = 'none';
     craftingBtn.style.display = 'none';
-    storageBtn.style.display = itemsData ? '' : 'none';
+    storageBtn.style.display = 'none';
 
     // Hide interactive elements
     dropZone.style.display = 'none';
