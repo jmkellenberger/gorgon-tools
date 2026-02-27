@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Survey Helper</title>
+  <link rel="icon" type="image/png" href="assets/dorf_favicon.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header>
+  <h1>Survey Helper</h1>
+</header>
+
+<div class="app-layout">
+  <div class="map-section">
+    <div class="controls">
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="mode-record" type="button">Record</button>
+        <button class="mode-btn" id="mode-find" type="button">Find</button>
+      </div>
+
+      <select id="zone-select">
+        <option value="Serbule" selected>Serbule</option>
+        <option value="Serbule Hills">Serbule Hills</option>
+        <option value="Eltibule">Eltibule</option>
+        <option value="Ilmari">Ilmari</option>
+        <option value="Kur Mountains">Kur Mountains</option>
+      </select>
+
+      <label class="batch-label">
+        Batch:
+        <input type="number" id="batch-size" value="5" min="1" max="50" />
+      </label>
+
+      <button class="btn btn-secondary" id="clear-btn" type="button">Clear</button>
+    </div>
+
+    <div class="map-container" id="map-container">
+      <img class="zone-map" id="zone-map" src="assets/serbule_map.webp" alt="Zone Map" />
+      <canvas id="path-canvas"></canvas>
+      <!-- dots + player icon injected by JS -->
+    </div>
+
+    <div id="results-bar">
+      <div class="result-row">
+        <span class="zone-display" id="zone-display">Serbule</span>
+        <span class="result-summary" id="result-summary">0/0 found</span>
+      </div>
+      <div class="resource-pills" id="resource-pills"></div>
+    </div>
+  </div>
+
+  <div class="sidebar-cards">
+    <div class="card">
+      <div class="card-title">Chat Log Directory</div>
+      <div class="log-dir-row">
+        <input type="text" id="log-dir" placeholder="Select chat log folder..." readonly />
+        <button class="btn" id="browse-btn" type="button">Browse</button>
+      </div>
+      <p class="help-text" id="log-status">No directory selected</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">How To Use</div>
+      <ol class="checklist">
+        <li>Set your chat log directory (ChatLogs folder)</li>
+        <li>Set the batch size to match your survey count</li>
+        <li>Drag the gold marker to where you stand in-game</li>
+        <li>Check all surveys in-game — dots appear in real-time</li>
+        <li>Recording auto-stops; switch to Find mode</li>
+        <li>Follow the numbered path to collect surveys</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
